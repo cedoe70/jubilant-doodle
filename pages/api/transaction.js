@@ -3,6 +3,25 @@ import nodemailer from "nodemailer"
 
 const prisma = new PrismaClient()
 
+// Helper: Generate unique 10-character transaction ID
+function generateTransactionId() {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+  let id = ""
+  for (let i = 0; i < 10; i++) {
+    id += chars.charAt(Math.floor(Math.random() * chars.length))
+  }
+  return id
+}
+
+// Set up nodemailer transporter
+const transporter = nodemailer.createTransport({
+  service: "gmail", // change if using another provider
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+})
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ message: "Method not allowed" })
@@ -15,53 +34,36 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Fetch the selected wallet/bank
-    const wallet = await prisma.wallet.findUnique({ where: { id: walletId } })
-    if (!wallet) {
-      return res.status(404).json({ message: "Wallet not found." })
-    }
+    const transactionId = generateTransactionId()
 
-    // Save transaction to database
-    await prisma.transaction.create({
+    const transaction = await prisma.transaction.create({
       data: {
         senderName,
         receiverName,
         receiverEmail,
         amount: parseFloat(amount),
-        walletId,
+        walletId: parseInt(walletId),
+        transactionId,
       },
+      include: { wallet: true },
     })
 
-    // Send notification email
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    })
-
-    const mailOptions = {
-      from: `"Money Transfer" <${process.env.EMAIL_USER}>`,
+    // Send success email to receiver
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
       to: receiverEmail,
-      subject: "You Have Received a Transfer",
+      subject: "You’ve received a payment",
       html: `
-        <div style="font-family: Arial, sans-serif; padding: 20px;">
-          <h2>You've received a transfer!</h2>
-          <p><strong>From:</strong> ${senderName}</p>
-          <p><strong>Amount:</strong> $${amount}</p>
-          <p><strong>Wallet/Bank:</strong> ${wallet.name} (${wallet.type})</p>
-          <p><strong>Date:</strong> ${new Date().toLocaleString()}</p>
-          <p style="margin-top: 20px;">Please check your ${wallet.type} account for the transfer.</p>
-        </div>
+        <h2>Payment Notification</h2>
+        <p><strong>${senderName}</strong> sent you <strong>$${amount}</strong> using <strong>${transaction.wallet.name}</strong>.</p>
+        <p>Transaction ID: <strong>${transactionId}</strong></p>
+        <p>Use this ID to track or print your receipt.</p>
       `,
-    }
+    })
 
-    await transporter.sendMail(mailOptions)
-
-    return res.status(200).json({ message: "Transaction sent and email delivered." })
+    return res.status(200).json({ message: "Transaction created", transactionId })
   } catch (error) {
     console.error(error)
-    return res.status(500).json({ message: "Something went wrong." })
+    return res.status(500).json({ message: "Failed to create transaction" })
   }
 }
