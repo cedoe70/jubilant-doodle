@@ -8,12 +8,12 @@ datasource db {
 }
 
 model Wallet {
-  id        String   @id @default(cuid())
-  name      String
-  address   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  transactions Transaction[]
+  id            String        @id @default(cuid())
+  name          String
+  address       String
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  transactions  Transaction[]
 }
 
 model Transaction {
@@ -23,7 +23,7 @@ model Transaction {
   receiverEmail  String
   amount         Float
   transactionId  String   @unique
-  referenceCode  String
+  referenceCode  String   @unique  // ✅ Marked as unique
   createdAt      DateTime @default(now())
   wallet         Wallet   @relation(fields: [walletId], references: [id])
   walletId       String
