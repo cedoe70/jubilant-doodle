@@ -1,12 +1,9 @@
 // pages/api/transaction.ts
-
-import { PrismaClient } from '@prisma/client';
-import type { NextApiRequest, NextApiResponse } from 'next';
-
-const prisma = new PrismaClient();
+import { NextApiRequest, NextApiResponse } from "next";
+import { prisma } from "@/lib/prisma";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method === 'POST') {
+  if (req.method === "POST") {
     const {
       senderName,
       receiverName,
@@ -17,19 +14,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       walletId,
     } = req.body;
 
-    if (
-      !senderName ||
-      !receiverName ||
-      !receiverEmail ||
-      !amount ||
-      !transactionId ||
-      !referenceCode ||
-      !walletId
-    ) {
-      return res.status(400).json({ message: 'Missing required fields.' });
+    if (!senderName || !receiverName || !receiverEmail || !amount || !transactionId || !referenceCode || !walletId) {
+      return res.status(400).json({ error: "Missing required fields" });
     }
 
     try {
+      const reference = `${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+
       const transaction = await prisma.transaction.create({
         data: {
           senderName,
@@ -38,16 +29,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           amount: parseFloat(amount),
           transactionId,
           referenceCode,
+          reference,
           walletId,
         },
       });
 
-      return res.status(200).json({ message: 'Transaction created', transaction });
-    } catch (error) {
-      console.error('Transaction creation error:', error);
-      return res.status(500).json({ message: 'Server error', error });
+      return res.status(201).json(transaction);
+    } catch (error: any) {
+      console.error(error);
+      return res.status(500).json({ error: "Something went wrong", detail: error.message });
     }
   } else {
-    return res.status(405).json({ message: 'Method not allowed' });
+    res.setHeader("Allow", "POST");
+    return res.status(405).end("Method Not Allowed");
   }
 }
