@@ -11,7 +11,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const transaction = await prisma.transaction.findUnique({
-      where: { reference: ref },
+      where: { referenceCode: ref }, // ✅ FIXED: must match the Prisma model
     });
 
     if (!transaction) {
