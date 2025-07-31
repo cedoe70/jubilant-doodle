@@ -67,6 +67,13 @@ const TransactionForm = () => {
       >
         Send
       </button>
+
+      <p className="mt-4 text-center text-sm">
+        <a href="/track" className="text-blue-600 underline">
+          Track a transaction
+        </a>
+      </p>
+
       <style jsx>{`
         .input {
           width: 100%;
@@ -79,9 +86,5 @@ const TransactionForm = () => {
     </form>
   )
 }
-<p className="mt-4 text-center text-sm">
-  <a href="/track" className="text-blue-600 underline">
-    Track a transaction
-  </a>
-</p>
+
 export default TransactionForm
