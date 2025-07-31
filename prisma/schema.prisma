@@ -24,8 +24,8 @@ model Transaction {
   amount         Float
   transactionId  String   @unique
   referenceCode  String   @unique
-  reference      String   @unique  // ✅ This is required for your API route to work
+  reference      String   @unique
   createdAt      DateTime @default(now())
-  wallet         Wallet   @relation(fields: [walletId], references: [id])
   walletId       String
+  wallet         Wallet   @relation(fields: [walletId], references: [id])
 }
