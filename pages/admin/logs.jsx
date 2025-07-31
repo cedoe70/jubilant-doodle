@@ -4,9 +4,13 @@ const AdminLogs = () => {
   const [logs, setLogs] = useState([])
 
   const fetchLogs = async () => {
-    const res = await fetch("/api/logs")
-    const data = await res.json()
-    setLogs(data.logs)
+    try {
+      const res = await fetch("/api/logs")
+      const data = await res.json()
+      setLogs(data.logs)
+    } catch (error) {
+      console.error("Failed to fetch logs", error)
+    }
   }
 
   useEffect(() => {
@@ -14,25 +18,25 @@ const AdminLogs = () => {
   }, [])
 
   return (
-    <div className="min-h-screen p-6 bg-gray-100">
+    <div className="min-h-screen bg-gray-100 p-6">
       <h1 className="text-2xl font-bold mb-6">System Logs</h1>
 
       {logs.length === 0 ? (
-        <p className="text-gray-500">No logs found.</p>
+        <div className="text-center text-gray-600">No logs available.</div>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full bg-white rounded shadow-md">
+          <table className="w-full bg-white shadow-md rounded-lg">
             <thead>
               <tr className="bg-gray-200 text-left">
-                <th className="p-3">ID</th>
+                <th className="p-3">#</th>
                 <th className="p-3">Message</th>
                 <th className="p-3">Timestamp</th>
               </tr>
             </thead>
             <tbody>
-              {logs.map((log) => (
+              {logs.map((log, index) => (
                 <tr key={log.id} className="border-b hover:bg-gray-50">
-                  <td className="p-3">{log.id}</td>
+                  <td className="p-3">{index + 1}</td>
                   <td className="p-3">{log.message}</td>
                   <td className="p-3">
                     {new Date(log.createdAt).toLocaleString()}
