@@ -1,77 +1,96 @@
 import React, { useState } from "react"
 
 const TrackTransaction = () => {
-  const [email, setEmail] = useState("")
-  const [results, setResults] = useState([])
-  const [loading, setLoading] = useState(false)
+  const [transactionId, setTransactionId] = useState("")
+  const [transaction, setTransaction] = useState(null)
   const [error, setError] = useState("")
 
   const handleTrack = async (e) => {
     e.preventDefault()
-    setLoading(true)
     setError("")
-    setResults([])
+    setTransaction(null)
 
     try {
-      const res = await fetch(`/api/track?email=${encodeURIComponent(email)}`)
+      const res = await fetch(`/api/track?transactionId=${transactionId}`)
       const data = await res.json()
-      if (!res.ok) throw new Error(data.message || "Something went wrong")
 
-      setResults(data.transactions)
+      if (!res.ok) {
+        throw new Error(data.message)
+      }
+
+      setTransaction(data.transaction)
     } catch (err) {
       setError(err.message)
-    } finally {
-      setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
-      <div className="bg-white p-6 rounded shadow-md w-full max-w-lg">
-        <h2 className="text-2xl font-bold mb-4 text-center">Track a Transaction</h2>
-        <form onSubmit={handleTrack}>
-          <input
-            type="email"
-            placeholder="Enter your email"
-            value={email}
-            required
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full border border-gray-300 p-3 rounded mb-4"
-          />
-          <button
-            type="submit"
-            className="bg-blue-600 text-white w-full py-2 rounded hover:bg-blue-700"
-          >
-            {loading ? "Searching..." : "Track"}
-          </button>
-        </form>
+    <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-4">
+      <form
+        onSubmit={handleTrack}
+        className="bg-white p-6 rounded-lg shadow-md w-full max-w-md"
+      >
+        <h2 className="text-2xl font-bold mb-4 text-center">
+          Track Transaction
+        </h2>
+        <input
+          type="text"
+          value={transactionId}
+          onChange={(e) => setTransactionId(e.target.value)}
+          placeholder="Enter Transaction ID"
+          className="input"
+          required
+        />
+        <button
+          type="submit"
+          className="mt-4 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded w-full"
+        >
+          Track
+        </button>
+        <style jsx>{`
+          .input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+          }
+        `}</style>
+      </form>
 
-        {error && <p className="mt-4 text-red-600">{error}</p>}
+      {error && <p className="text-red-500 mt-4">{error}</p>}
 
-        {results.length > 0 && (
-          <div className="mt-6">
-            <h3 className="text-lg font-semibold mb-2">Results:</h3>
-            <ul className="space-y-3">
-              {results.map((tx) => (
-                <li key={tx.id} className="border p-4 rounded">
-                  <p>
-                    <strong>From:</strong> {tx.senderName}
-                  </p>
-                  <p>
-                    <strong>Amount:</strong> ${tx.amount}
-                  </p>
-                  <p>
-                    <strong>Wallet/Bank:</strong> {tx.wallet.name} ({tx.wallet.type})
-                  </p>
-                  <p>
-                    <strong>Date:</strong> {new Date(tx.createdAt).toLocaleString()}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </div>
+      {transaction && (
+        <div className="mt-6 bg-white p-6 rounded-lg shadow-md w-full max-w-lg">
+          <h3 className="text-xl font-semibold mb-2 text-center">
+            Transaction Details
+          </h3>
+          <ul className="space-y-2">
+            <li>
+              <strong>Sender:</strong> {transaction.senderName}
+            </li>
+            <li>
+              <strong>Receiver:</strong> {transaction.receiverName}
+            </li>
+            <li>
+              <strong>Email:</strong> {transaction.receiverEmail}
+            </li>
+            <li>
+              <strong>Wallet:</strong> {transaction.wallet.name}
+            </li>
+            <li>
+              <strong>Amount:</strong> ${transaction.amount}
+            </li>
+            <li>
+              <strong>Transaction ID:</strong> {transaction.transactionId}
+            </li>
+            <li>
+              <strong>Date:</strong>{" "}
+              {new Date(transaction.createdAt).toLocaleString()}
+            </li>
+          </ul>
+        </div>
+      )}
     </div>
   )
 }
