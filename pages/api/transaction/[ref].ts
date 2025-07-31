@@ -1,25 +1,36 @@
-import { NextApiRequest, NextApiResponse } from "next"
-import { prisma } from "../../../lib/prisma"
+// pages/api/transaction/[ref].ts
+
+import { NextApiRequest, NextApiResponse } from "next";
+import { prisma } from "@/lib/prisma";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { ref } = req.query
+  const { ref } = req.query;
 
   if (req.method !== "GET") {
-    return res.status(405).json({ message: "Method not allowed" })
+    return res.status(405).json({ message: "Method not allowed" });
+  }
+
+  if (!ref || typeof ref !== "string") {
+    return res.status(400).json({ message: "Invalid reference code" });
   }
 
   try {
     const transaction = await prisma.transaction.findUnique({
-      where: { referenceCode: String(ref) },
-    })
+      where: {
+        referenceCode: ref,
+      },
+      include: {
+        wallet: true,
+      },
+    });
 
     if (!transaction) {
-      return res.status(404).json({ message: "Transaction not found" })
+      return res.status(404).json({ message: "Transaction not found" });
     }
 
-    res.status(200).json({ transaction })
+    res.status(200).json(transaction);
   } catch (error) {
-    console.error(error)
-    res.status(500).json({ message: "Server error" })
+    console.error("Error fetching transaction:", error);
+    res.status(500).json({ message: "Server error" });
   }
 }
