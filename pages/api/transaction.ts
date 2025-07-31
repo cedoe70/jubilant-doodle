@@ -1,52 +1,38 @@
-// pages/api/transaction.ts
-import { NextApiRequest, NextApiResponse } from 'next'
-import { PrismaClient } from '@prisma/client'
-import { nanoid } from 'nanoid'
+generator client {
+  provider = "prisma-client-js"
+}
 
-const prisma = new PrismaClient()
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method === 'POST') {
-    try {
-      const {
-        senderName,
-        receiverName,
-        receiverEmail,
-        amount,
-        referenceCode,
-        walletId,
-      } = req.body
+model Wallet {
+  id        Int           @id @default(autoincrement())
+  name      String
+  type      String        // e.g. "Bank", "Crypto", etc.
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
 
-      if (
-        !senderName ||
-        !receiverName ||
-        !receiverEmail ||
-        !amount ||
-        !referenceCode ||
-        !walletId
-      ) {
-        return res.status(400).json({ error: 'Missing required fields' })
-      }
+  transactions Transaction[]
+}
 
-      const transaction = await prisma.transaction.create({
-        data: {
-          senderName,
-          receiverName,
-          receiverEmail,
-          amount: parseFloat(amount),
-          referenceCode,
-          transactionId: nanoid(10), // auto-generate unique ID
-          wallet: { connect: { id: Number(walletId) } },
-        },
-      })
+model Transaction {
+  id             Int      @id @default(autoincrement())
+  senderName     String
+  receiverName   String
+  receiverEmail  String
+  amount         Float
+  transactionId  String   @unique
+  referenceCode  String   @unique
+  status         String   @default("pending") // <-- ADDED THIS LINE
+  walletId       Int
+  wallet         Wallet   @relation(fields: [walletId], references: [id])
+  createdAt      DateTime @default(now())
+}
 
-      res.status(201).json(transaction)
-    } catch (error) {
-      console.error('Error creating transaction:', error)
-      res.status(500).json({ error: 'Failed to create transaction' })
-    }
-  } else {
-    res.setHeader('Allow', ['POST'])
-    res.status(405).end(`Method ${req.method} Not Allowed`)
-  }
+model Log {
+  id        Int      @id @default(autoincrement())
+  message   String
+  createdAt DateTime @default(now())
 }
