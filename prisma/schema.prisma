@@ -8,23 +8,23 @@ datasource db {
 }
 
 model Wallet {
-  id        String        @id @default(cuid())
+  id        Int           @id @default(autoincrement())
   name      String
-  type      String        // e.g. "bank", "crypto", "cash"
+  type      String        // e.g. "Bank", "Crypto", etc.
   createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
   transactions Transaction[]
 }
 
 model Transaction {
-  id            String   @id @default(cuid())
-  senderName    String
-  receiverName  String
-  receiverEmail String
-  amount        Float
-  status        String   @default("pending")
-  referenceCode String   @unique
-  createdAt     DateTime @default(now())
-
-  walletId      String
-  wallet        Wallet   @relation(fields: [walletId], references: [id])
+  id             Int      @id @default(autoincrement())
+  senderName     String
+  receiverName   String
+  receiverEmail  String
+  amount         Float
+  transactionId  String   @unique
+  walletId       Int
+  wallet         Wallet   @relation(fields: [walletId], references: [id])
+  createdAt      DateTime @default(now())
 }
