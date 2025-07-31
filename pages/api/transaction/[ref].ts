@@ -1,4 +1,5 @@
 // pages/api/transaction/[ref].ts
+
 import type { NextApiRequest, NextApiResponse } from "next";
 import { prisma } from "../../../lib/prisma";
 
@@ -10,8 +11,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
+    // This assumes your schema.prisma has: reference String @unique
     const transaction = await prisma.transaction.findUnique({
-      where: { referenceCode: ref }, // ✅ FIXED: must match the Prisma model
+      where: { reference: ref }, // ✅ Use the correct unique field
     });
 
     if (!transaction) {
