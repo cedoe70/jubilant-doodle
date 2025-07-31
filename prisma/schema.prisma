@@ -24,10 +24,12 @@ model Transaction {
   receiverEmail  String
   amount         Float
   transactionId  String   @unique
+  referenceCode  String   @unique
   walletId       Int
   wallet         Wallet   @relation(fields: [walletId], references: [id])
   createdAt      DateTime @default(now())
 }
+
 model Log {
   id        Int      @id @default(autoincrement())
   message   String
