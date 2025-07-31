@@ -8,11 +8,11 @@ datasource db {
 }
 
 model Wallet {
-  id           Int           @id @default(autoincrement())
-  name         String
-  type         String        // e.g., "Bank", "Crypto", etc.
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  id        Int           @id @default(autoincrement())
+  name      String
+  type      String        // e.g. "Bank", "Crypto", etc.
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
 
   transactions Transaction[]
 }
