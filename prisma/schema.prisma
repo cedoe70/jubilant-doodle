@@ -7,13 +7,24 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Wallet {
+  id        String        @id @default(cuid())
+  name      String
+  type      String        // e.g. "bank", "crypto", "cash"
+  createdAt DateTime      @default(now())
+  transactions Transaction[]
+}
+
 model Transaction {
-  id             String   @id @default(cuid())
-  senderName     String
-  receiverName   String
-  receiverEmail  String
-  amount         Float
-  referenceCode  String   @unique
-  status         String   @default("pending")
-  createdAt      DateTime @default(now())
+  id            String   @id @default(cuid())
+  senderName    String
+  receiverName  String
+  receiverEmail String
+  amount        Float
+  status        String   @default("pending")
+  referenceCode String   @unique
+  createdAt     DateTime @default(now())
+
+  walletId      String
+  wallet        Wallet   @relation(fields: [walletId], references: [id])
 }
