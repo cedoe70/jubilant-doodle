@@ -1,38 +1,53 @@
-generator client {
-  provider = "prisma-client-js"
-}
+// pages/api/transaction.ts
 
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
+import { PrismaClient } from '@prisma/client';
+import type { NextApiRequest, NextApiResponse } from 'next';
 
-model Wallet {
-  id           Int           @id @default(autoincrement())
-  name         String
-  type         String        // e.g. "Bank", "Crypto", etc.
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+const prisma = new PrismaClient();
 
-  transactions Transaction[]
-}
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method === 'POST') {
+    const {
+      senderName,
+      receiverName,
+      receiverEmail,
+      amount,
+      transactionId,
+      referenceCode,
+      walletId,
+    } = req.body;
 
-model Transaction {
-  id             Int      @id @default(autoincrement())
-  senderName     String
-  receiverName   String
-  receiverEmail  String
-  amount         Float
-  transactionId  String   @unique
-  referenceCode  String   @unique
-  walletId       Int
-  status         String   @default("pending") // ✅ Added this line
-  wallet         Wallet   @relation(fields: [walletId], references: [id])
-  createdAt      DateTime @default(now())
-}
+    if (
+      !senderName ||
+      !receiverName ||
+      !receiverEmail ||
+      !amount ||
+      !transactionId ||
+      !referenceCode ||
+      !walletId
+    ) {
+      return res.status(400).json({ message: 'Missing required fields.' });
+    }
 
-model Log {
-  id        Int      @id @default(autoincrement())
-  message   String
-  createdAt DateTime @default(now())
+    try {
+      const transaction = await prisma.transaction.create({
+        data: {
+          senderName,
+          receiverName,
+          receiverEmail,
+          amount: parseFloat(amount),
+          transactionId,
+          referenceCode,
+          walletId,
+        },
+      });
+
+      return res.status(200).json({ message: 'Transaction created', transaction });
+    } catch (error) {
+      console.error('Transaction creation error:', error);
+      return res.status(500).json({ message: 'Server error', error });
+    }
+  } else {
+    return res.status(405).json({ message: 'Method not allowed' });
+  }
 }
