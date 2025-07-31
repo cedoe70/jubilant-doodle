@@ -1,38 +1,39 @@
-generator client {
-  provider = "prisma-client-js"
-}
+import type { NextApiRequest, NextApiResponse } from "next";
+import { PrismaClient } from "@prisma/client";
 
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
+const prisma = new PrismaClient();
 
-model Wallet {
-  id        Int           @id @default(autoincrement())
-  name      String
-  type      String        // e.g. "Bank", "Crypto", etc.
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method === "POST") {
+    try {
+      const {
+        senderName,
+        receiverName,
+        receiverEmail,
+        amount,
+        transactionId,
+        referenceCode,
+        walletId,
+      } = req.body;
 
-  transactions Transaction[]
-}
+      const transaction = await prisma.transaction.create({
+        data: {
+          senderName,
+          receiverName,
+          receiverEmail,
+          amount,
+          transactionId,
+          referenceCode,
+          walletId,
+        },
+      });
 
-model Transaction {
-  id             Int      @id @default(autoincrement())
-  senderName     String
-  receiverName   String
-  receiverEmail  String
-  amount         Float
-  transactionId  String   @unique
-  referenceCode  String   @unique
-  status         String   @default("pending") // <-- ADDED THIS LINE
-  walletId       Int
-  wallet         Wallet   @relation(fields: [walletId], references: [id])
-  createdAt      DateTime @default(now())
-}
-
-model Log {
-  id        Int      @id @default(autoincrement())
-  message   String
-  createdAt DateTime @default(now())
+      res.status(201).json({ success: true, transaction });
+    } catch (error: any) {
+      console.error("Error creating transaction:", error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  } else {
+    res.status(405).json({ success: false, error: "Method not allowed" });
+  }
 }
