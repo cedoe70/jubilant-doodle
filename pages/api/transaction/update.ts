@@ -7,7 +7,7 @@ const resend = new Resend(process.env.RESEND_API_KEY)
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") return res.status(405).end()
 
-  const { referenceCode, newStatus } = req.body
+  const { referenceCode, newStatus, reason } = req.body
 
   try {
     const transaction = await prisma.transaction.update({
@@ -27,6 +27,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           <p><strong>Reference Code:</strong> ${transaction.referenceCode}</p>
           <p>Status: <strong>Completed</strong></p>
           <p>Thank you for using our service.</p>
+        `,
+      })
+    }
+
+    if (newStatus === "rejected") {
+      await resend.emails.send({
+        from: process.env.EMAIL_FROM!,
+        to: transaction.receiverEmail,
+        subject: "Transaction Rejected",
+        html: `
+          <h2>Hello ${transaction.receiverName},</h2>
+          <p>We're sorry to inform you that the money transfer from <strong>${transaction.senderName}</strong> has been <span style="color: red;"><strong>rejected</strong></span>.</p>
+          <p><strong>Reference Code:</strong> ${transaction.referenceCode}</p>
+          <p><strong>Status:</strong> Rejected</p>
+          ${
+            reason
+              ? `<p><strong>Reason:</strong> ${reason}</p>`
+              : ""
+          }
+          <p>If you have questions, please contact our support team.</p>
         `,
       })
     }
